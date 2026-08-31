@@ -41,6 +41,20 @@ function playSound(type = 'click') {
     }
 }
 
+// --- Live Court Match Timer Interval ---
+setInterval(() => {
+    const timerEls = document.querySelectorAll('.match-timer-display');
+    timerEls.forEach(el => {
+        const startTime = parseInt(el.getAttribute('data-start'));
+        if (startTime) {
+            const elapsedSecs = Math.floor((Date.now() - startTime) / 1000);
+            const mins = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
+            const secs = String(elapsedSecs % 60).padStart(2, '0');
+            el.innerText = `${mins}:${secs}`;
+        }
+    });
+}, 1000);
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- URL Invite Link Handler ---
     const urlParams = new URLSearchParams(window.location.search);
@@ -50,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('authView').style.display = 'none';
         document.getElementById('playerJoinView').style.display = 'block';
 
-        db.from('users').select('club_name, name').eq('email', joinHostEmail).single()
+        db.from('users').select('club_name, name').eq('email', joinHostEmail).maybeSingle()
             .then(({ data }) => {
                 if (data) {
                     document.getElementById('joinClubTitle').innerText = `Join ${data.club_name || data.name + "'s Club"}`;
@@ -66,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const { error } = await db.from('players').insert([{
-                    id: Date.now() + Math.random(),
+                    id: String(Date.now() + Math.random()),
                     name,
                     email,
                     skill,
@@ -81,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 document.getElementById('playerJoinForm').innerHTML = `
                     <div style="padding: 20px; color: #059669; font-weight: 800; font-size: 1.1rem;">
-                        🎉 Successfully Joined!<br>
+                        Successfully Joined!<br>
                         <span style="font-size: 0.85rem; color: #64748b; font-weight: normal;">You are now on the active club roster. You can close this page.</span>
                     </div>
                 `;
@@ -124,7 +138,9 @@ form.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Verifying...';
 
     try {
-        let { data: existingUser } = await db.from('users').select('*').eq('email', email).single();
+        let { data: existingUser, error: selectError } = await db.from('users').select('*').eq('email', email).maybeSingle();
+        if (selectError) throw selectError;
+
         if (existingUser) {
             localStorage.setItem('piqueueHost', existingUser.name);
             localStorage.setItem('piqueueEmail', existingUser.email);
@@ -150,6 +166,7 @@ form.addEventListener('submit', async (e) => {
             loadSavedPlayers();
         }
     } catch (error) {
+        console.error("Auth error:", error);
         showMessage(error.message || 'Database error occurred.', 'error');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Continue to Dashboard';
@@ -158,7 +175,7 @@ form.addEventListener('submit', async (e) => {
 
 async function fetchHostStats(email) {
     try {
-        let { data: user } = await db.from('users').select('*').eq('email', email).single();
+        let { data: user } = await db.from('users').select('*').eq('email', email).maybeSingle();
         if (user && user.club_name) {
             state.host.clubName = user.club_name;
         }
@@ -188,6 +205,7 @@ function endSession() {
         localStorage.removeItem('piqueueEmail');
         localStorage.removeItem('piqueueClub');
         state.players = [];
+        state.savedPool = [];
         state.activeMatches = {};
         state.upNext = {};
         state.round = 1;
@@ -201,6 +219,74 @@ function endSession() {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Continue to Dashboard';
     }
+}
+
+// --- End Active Session, Auto-Save Roster/Stats via Upsert, and Open Results Modal ---
+async function endActiveSession() {
+    playSound('success');
+
+    for (const p of state.players) {
+        try {
+            let { error } = await db.from('players').upsert([{
+                id: String(p.id),
+                name: p.name,
+                email: p.email,
+                skill: p.skill || 3.5,
+                gender: p.gender || 'M',
+                host_email: state.host.email,
+                games_played: p.gamesPlayed,
+                wins: p.wins,
+                losses: p.losses
+            }], { onConflict: 'id' });
+
+            if (error) throw error;
+        } catch (err) {
+            console.error("Error auto-saving player stats:", err);
+            alert(`Save failed for ${p.name}: ${err.message}`);
+            return;
+        }
+    }
+
+    const content = document.getElementById('summaryContent');
+    const sorted = [...state.players].sort((a, b) => b.wins - a.wins);
+
+    let standingsHtml = '';
+    sorted.forEach((p, idx) => {
+        const wr = p.gamesPlayed > 0 ? Math.round((p.wins / p.gamesPlayed) * 100) : 0;
+        standingsHtml += `<tr><td>${idx + 1}. ${p.name}</td><td>${p.gamesPlayed}</td><td>${p.wins}W-${p.losses}L (${wr}%)</td></tr>`;
+    });
+
+    content.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 700;">SESSION RESULTS</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: #059669; margin-top: 2px;">Completed ${state.round - 1} Round(s)</div>
+                <div style="font-size: 0.8rem; color: #16a34a; margin-top: 4px;">All player records successfully saved to database!</div>
+            </div>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <table class="standings-table" style="font-size: 0.85rem;">
+                    <thead><tr><th>Player</th><th>Games</th><th>Record</th></tr></thead>
+                    <tbody>${standingsHtml || '<tr><td colspan="3">No games played</td></tr>'}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('summaryModal').style.display = 'flex';
+}
+
+function closeSummaryModal() {
+    playSound('click');
+    document.getElementById('summaryModal').style.display = 'none';
+
+    state.activeMatches = {};
+    state.upNext = {};
+    state.round = 1;
+    state.players = []; // Clear session roster for a fresh session setup
+    document.getElementById('sessionContainer').style.display = 'none';
+    document.getElementById('setupContainer').style.display = 'block';
+    renderPlayers();
+    updateHeaderStats();
 }
 
 function returnToSetup() {
@@ -229,7 +315,7 @@ let state = {
     chosenTeamB: [null, null]
 };
 
-// --- Mobile/Tablet Navigation Hamburger Menu Toggle ---
+// --- Mobile/Tablet Navigation Sidebar Toggle (Right Side Drawer) ---
 function toggleMobileSidebar() {
     playSound('click');
     const activeView = document.querySelector('.view-container:not([style*="display: none"])');
@@ -240,6 +326,7 @@ function toggleMobileSidebar() {
         if (backdrop) backdrop.classList.toggle('open');
     }
 }
+
 // --- View Navigation ---
 function showDashboardView() {
     playSound('click');
@@ -278,7 +365,8 @@ async function saveClubNameSetting() {
     document.getElementById('clubCardHeaderTitle').innerText = newName;
 
     try {
-        await db.from('users').update({ club_name: newName }).eq('email', state.host.email);
+        let { error } = await db.from('users').update({ club_name: newName }).eq('email', state.host.email);
+        if (error) throw error;
         alert("Club settings successfully updated!");
     } catch (err) {
         console.error("Error updating club name in database:", err);
@@ -314,7 +402,7 @@ function setMode(mode) {
     document.querySelectorAll('.mobileModeLabel').forEach(el => el.innerText = label);
 }
 
-// --- Player Roster & Persistent Storage ---
+// --- Player Roster & Persistent Storage (Saved to Saved Players Pool) ---
 async function addPlayer(nameStr = null, emailStr = null) {
     playSound('success');
     const nameInput = document.getElementById('playerName');
@@ -327,25 +415,27 @@ async function addPlayer(nameStr = null, emailStr = null) {
         return;
     }
 
-    if (!state.players.find(p => p.email === email)) {
-        const newPlayer = { id: Date.now() + Math.random(), name, email, skill: 3.5, gender: 'M', gamesPlayed: 0, wins: 0, losses: 0 };
-        state.players.push(newPlayer);
+    if (!state.savedPool.find(p => p.email === email)) {
+        const newPlayer = { id: String(Date.now() + Math.random()), name, email, skill: 3.5, gender: 'M', gamesPlayed: 0, wins: 0, losses: 0 };
+        state.savedPool.push(newPlayer);
+        updateSavedPlayersCountLabel();
 
         try {
-            await db.from('players').insert([{
+            const { error } = await db.from('players').upsert([{
                 id: newPlayer.id, name: newPlayer.name, email: newPlayer.email, skill: 3.5, gender: 'M',
                 host_email: state.host.email, games_played: 0, wins: 0, losses: 0
-            }]);
+            }], { onConflict: 'id' });
+            if (error) throw error;
         } catch (err) {
             console.error("Database save error:", err);
+            alert("Error saving player: " + err.message);
         }
 
         nameInput.value = '';
         emailInput.value = '';
         if (!nameStr) nameInput.focus();
-        renderPlayers();
     } else {
-        alert("A player with this email is already on the roster.");
+        alert("A player with this email is already in your Saved Players pool.");
     }
 }
 
@@ -358,9 +448,7 @@ async function loadSavedPlayers() {
                 id: p.id, name: p.name, email: p.email, skill: p.skill || 3.5, gender: p.gender || 'M',
                 gamesPlayed: p.games_played || 0, wins: p.wins || 0, losses: p.losses || 0
             }));
-            state.players = [...state.savedPool];
             updateSavedPlayersCountLabel();
-            renderPlayers();
         }
     } catch (err) {
         console.error("Error loading saved players:", err);
@@ -400,7 +488,10 @@ function renderSavedPlayersModalList() {
                     <strong>${sp.name}</strong>
                     <div style="font-size: 0.75rem; color: #64748b;">${sp.email}</div>
                 </div>
-                ${alreadyAdded ? '<span style="font-size:0.75rem; color:#059669; font-weight:800;">Added</span>' : `<button class="btn-solid" style="padding: 4px 10px; font-size:0.75rem;" onclick="addSavedPlayerToSession('${sp.name}', '${sp.email}')">+ Add</button>`}
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    ${alreadyAdded ? '<span style="font-size:0.75rem; color:#059669; font-weight:800;">Added</span>' : `<button class="btn-solid" style="padding: 4px 10px; font-size:0.75rem;" onclick="addSavedPlayerToSession('${sp.name}', '${sp.email}')">+ Add</button>`}
+                    <button class="chip-remove" style="font-size: 1rem; padding: 2px 6px;" onclick="deleteSavedPlayer('${sp.id}')">&times;</button>
+                </div>
             </div>
         `;
     });
@@ -408,11 +499,30 @@ function renderSavedPlayersModalList() {
 
 async function addSavedPlayerToSession(name, email) {
     playSound('click');
-    if (!state.players.find(p => p.email === email)) {
+    if (!state.players.some(p => p.email === email)) {
         const found = state.savedPool.find(sp => sp.email === email);
-        state.players.push(found ? { ...found } : { id: Date.now() + Math.random(), name, email, skill: 3.5, gender: 'M', gamesPlayed: 0, wins: 0, losses: 0 });
+        state.players.push(found ? { ...found } : { id: String(Date.now() + Math.random()), name, email, skill: 3.5, gender: 'M', gamesPlayed: 0, wins: 0, losses: 0 });
         renderPlayers();
         renderSavedPlayersModalList();
+    }
+}
+
+async function deleteSavedPlayer(id) {
+    playSound('click');
+    if (confirm("Are you sure you want to delete this player permanently from your saved pool?")) {
+        try {
+            const { error } = await db.from('players').delete().eq('id', id);
+            if (error) throw error;
+
+            state.savedPool = state.savedPool.filter(p => p.id !== id);
+            state.players = state.players.filter(p => p.id !== id);
+            updateSavedPlayersCountLabel();
+            renderPlayers();
+            renderSavedPlayersModalList();
+        } catch (err) {
+            console.error("Error deleting player:", err);
+            alert("Could not delete player: " + err.message);
+        }
     }
 }
 
@@ -447,7 +557,7 @@ function renderPlayers() {
                     <span class="chip-name">${p.name}</span>
                     <span class="chip-email">${p.email}</span>
                 </div>
-                <button class="chip-remove" onclick="removePlayer(${p.id})">Remove</button>
+                <button class="chip-remove" onclick="removePlayer('${p.id}')">Remove</button>
             </div>
         `;
     });
@@ -484,8 +594,8 @@ function renderPlayersManagementTable() {
                 <td style="color: #94a3b8;">-</td>
                 <td>
                     <div class="gender-toggle-group">
-                        <button class="gender-btn ${isM ? 'active-m' : ''}" onclick="setPlayerGender(${p.id}, 'M')">M</button>
-                        <button class="gender-btn ${!isM ? 'active-f' : ''}" onclick="setPlayerGender(${p.id}, 'F')">F</button>
+                        <button class="gender-btn ${isM ? 'active-m' : ''}" onclick="setPlayerGender('${p.id}', 'M')">M</button>
+                        <button class="gender-btn ${!isM ? 'active-f' : ''}" onclick="setPlayerGender('${p.id}', 'F')">F</button>
                     </div>
                 </td>
                 <td>
@@ -494,7 +604,7 @@ function renderPlayersManagementTable() {
                     <div style="font-size: 0.75rem; color: #16a34a; font-weight: 700;">WR ${wr}%</div>
                 </td>
                 <td>
-                    <button class="btn-outline" style="padding: 4px 12px; font-size: 0.75rem;" onclick="editPlayerPrompt(${p.id})">Edit</button>
+                    <button class="btn-outline" style="padding: 4px 12px; font-size: 0.75rem;" onclick="editPlayerPrompt('${p.id}')">Edit</button>
                 </td>
             </tr>
         `;
@@ -528,6 +638,14 @@ function startSession() {
         alert(`You need at least ${playersNeeded} players to fill your ${state.courts} court(s).`);
         return;
     }
+
+    // Reset session stats cleanly so each new session starts fresh with 0-0 records
+    state.players.forEach(p => {
+        p.gamesPlayed = 0;
+        p.wins = 0;
+        p.losses = 0;
+    });
+
     document.getElementById('setupContainer').style.display = 'none';
     document.getElementById('sessionContainer').style.display = 'block';
     state.activeMatches = {};
@@ -621,6 +739,7 @@ function refreshBoard() {
                 <div class="match-card" id="court_${i}">
                     <div class="court-top-bar">
                         <span>Court ${i}</span>
+                        <span class="match-timer-display" data-start="${match.startTime}">00:00</span>
                         <span class="live-badge">LIVE</span>
                     </div>
                     <div class="court-body-ref">
@@ -742,7 +861,10 @@ function sendToCourt(courtNum) {
         if (!state.upNext[courtNum]) return;
     }
 
-    state.activeMatches[courtNum] = state.upNext[courtNum];
+    state.activeMatches[courtNum] = {
+        ...state.upNext[courtNum],
+        startTime: Date.now()
+    };
     delete state.upNext[courtNum];
 
     state.activeMatches[courtNum].teamA.forEach(p => state.players.find(sp => sp.id === p.id).gamesPlayed += 1);
@@ -886,7 +1008,8 @@ function confirmChooseModal() {
     const courtNum = state.activeChooseCourt;
     state.activeMatches[courtNum] = {
         teamA: [...state.chosenTeamA],
-        teamB: [...state.chosenTeamB]
+        teamB: [...state.chosenTeamB],
+        startTime: Date.now()
     };
 
     state.chosenTeamA.forEach(p => state.players.find(sp => sp.id === p.id).gamesPlayed += 1);
@@ -901,7 +1024,6 @@ function openSummaryModal() {
     const content = document.getElementById('summaryContent');
     const totalPlayers = state.players.length;
     const sorted = [...state.players].sort((a, b) => b.wins - a.wins);
-    const topWinner = sorted.length > 0 && sorted[0].wins > 0 ? `${sorted[0].name} (${sorted[0].wins} Wins)` : 'None yet';
 
     content.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -920,9 +1042,4 @@ function openSummaryModal() {
         </div>
     `;
     document.getElementById('summaryModal').style.display = 'flex';
-}
-
-function closeSummaryModal() {
-    playSound('click');
-    document.getElementById('summaryModal').style.display = 'none';
 }

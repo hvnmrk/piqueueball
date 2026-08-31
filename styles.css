@@ -9,6 +9,12 @@
     --bg-dashboard: #f8fafc;
     --card-bg: #ffffff;
     --error: #ef4444;
+    --team-1: #334155;
+    /* Refined Deep Slate for Team 1 */
+    --team-1-hover: #1e293b;
+    --team-2: #d97706;
+    /* Harmonious Warm Amber/Terracotta for Team 2 */
+    --team-2-hover: #b45309;
 }
 
 * {
@@ -209,7 +215,7 @@ body.dashboard-mode {
     background: #dc2626;
 }
 
-/* Mobile Top Header & Sidebar Drawer */
+/* Mobile Top Header & Sliding Sidebar Drawer (Right Side) */
 .mobile-top-bar {
     display: none;
     background: #064e3b;
@@ -245,7 +251,7 @@ body.dashboard-mode {
     top: 0;
     bottom: 0;
     right: 0;
-    z-index: 1200;
+    z-index: 1300;
     border-left: 1px solid #047857;
     transform: translateX(100%);
     transition: transform 0.3s ease;
@@ -305,7 +311,7 @@ body.dashboard-mode {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1150;
+    z-index: 1250;
 }
 
 .sidebar-backdrop.open {
@@ -340,7 +346,7 @@ body.dashboard-mode {
 .sub-header-stats-bar {
     background: white;
     padding: 14px 24px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -553,11 +559,11 @@ label {
 }
 
 .choose-team-header.blue {
-    background: #2563eb;
+    background: var(--team-1);
 }
 
 .choose-team-header.orange {
-    background: #f97316;
+    background: var(--team-2);
 }
 
 .player-slot {
@@ -574,9 +580,9 @@ label {
 }
 
 .player-slot.filled {
-    background: #e0f2fe;
-    border: 1px solid #7dd3fc;
-    color: #0369a1;
+    background: #e2e8f0;
+    border: 1px solid var(--border);
+    color: var(--text-main);
     border-style: solid;
 }
 
@@ -1018,7 +1024,7 @@ button:disabled {
 }
 
 .team-header-bar-blue {
-    background: #2563eb;
+    background: var(--team-1);
     color: white;
     font-size: 0.7rem;
     font-weight: 800;
@@ -1027,7 +1033,7 @@ button:disabled {
 }
 
 .team-header-bar-orange {
-    background: #f97316;
+    background: var(--team-2);
     color: white;
     font-size: 0.7rem;
     font-weight: 800;
@@ -1086,6 +1092,12 @@ button:disabled {
     font-weight: 800;
 }
 
+.match-timer-display {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-family: monospace;
+}
+
 .court-body-ref {
     padding: 16px;
     display: grid;
@@ -1103,7 +1115,7 @@ button:disabled {
 }
 
 .team-label-blue {
-    background: #2563eb;
+    background: var(--team-1);
     color: white;
     font-size: 0.65rem;
     font-weight: 800;
@@ -1115,7 +1127,7 @@ button:disabled {
 }
 
 .team-label-orange {
-    background: #f97316;
+    background: var(--team-2);
     color: white;
     font-size: 0.65rem;
     font-weight: 800;
@@ -1136,7 +1148,7 @@ button:disabled {
 }
 
 .btn-win-team1 {
-    background: #2563eb;
+    background: var(--team-1);
     color: white;
     border: none;
     padding: 10px;
@@ -1148,11 +1160,11 @@ button:disabled {
 }
 
 .btn-win-team1:hover {
-    background: #1d4ed8;
+    background: var(--team-1-hover);
 }
 
 .btn-win-team2 {
-    background: #f97316;
+    background: var(--team-2);
     color: white;
     border: none;
     padding: 10px;
@@ -1164,7 +1176,7 @@ button:disabled {
 }
 
 .btn-win-team2:hover {
-    background: #ea580c;
+    background: var(--team-2-hover);
 }
 
 /* Standings */

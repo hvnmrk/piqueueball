@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Piqueue Ball</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="auth-mode">
+    <div class="bg-gradient"></div>
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div id="authView" class="view-container active">
+        <div class="glass-card">
+            <h2 class="app-title">Piqueue Ball</h2>
+            <p class="auth-subtitle">Log in or create an account</p>
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="name">Host Name</label>
+                    <input type="text" id="name" required placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label for="clubName">Club Name (Optional)</label>
+                    <input type="text" id="clubName" placeholder="My Pickleball Club">
+                </div>
+                <div class="form-group">
+                    <label for="email">Gmail Address</label>
+                    <input type="email" id="email" required pattern=".*@gmail\.com$" placeholder="coachalex@gmail.com">
+                </div>
+                <button type="submit" id="submitBtn" class="btn-gradient w-100">Continue to Dashboard</button>
+                <div id="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="playerJoinView" class="view-container" style="display: none;">
+        <div class="glass-card text-center">
+            <h2 class="app-title" id="joinClubTitle">Join Club</h2>
+            <p class="auth-subtitle">Register to join this club's open play roster</p>
+            <form id="playerJoinForm">
+                <div class="form-group text-left">
+                    <label for="joinName">Your Full Name</label>
+                    <input type="text" id="joinName" required placeholder="Enter name">
+                </div>
+                <div class="form-group text-left">
+                    <label for="joinEmail">Your Email Address</label>
+                    <input type="email" id="joinEmail" required placeholder="john@gmail.com">
+                </div>
+                <div class="form-group text-left">
+                    <label for="joinSkill">Skill Level (DUPR)</label>
+                    <select id="joinSkill">
+                        <option value="2.5">2.5 (Novice)</option>
+                        <option value="3.0">3.0 (Intermediate)</option>
+                        <option value="3.5" selected>3.5 (Advanced Int.)</option>
+                        <option value="4.0">4.0 (Skilled)</option>
+                        <option value="4.5">4.5 (Expert)</option>
+                        <option value="5.0">5.0 (Pro)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-gradient w-100">Join Club Roster</button>
+                <div id="joinMessage" class="mt-3"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboardView" class="view-container" style="display: none;">
+        <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleMobileSidebar()"></div>
+
+        <header class="mobile-top-bar">
+            <div class="brand-logo">
+                <span class="brand-icon">🟢</span>
+                <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+            </div>
+            <button class="hamburger-toggle" onclick="toggleMobileSidebar()">☰</button>
+        </header>
+
+        <header class="top-nav-bar desktop-only-nav">
+            <div class="nav-left">
+                <div class="brand-logo">
+                    <span class="brand-icon">🟢</span>
+                    <span id="navClubTitle" class="brand-text">Piqueue Ball Club</span>
+                </div>
+                <span class="brand-sub">host</span>
+            </div>
+            <div class="nav-right">
+                <button class="banner-btn" onclick="showDashboardView()"> Home</button>
+                <button class="banner-btn" onclick="showPlayersView()"> Players</button>
+                <button class="banner-btn" onclick="showClubSettingsView()"> Club Settings</button>
+                <div class="mode-display-pill">
+                    <span class="mode-label">MODE</span>
+                    <span id="currentModeLabel" class="mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top" onclick="endSession()">End</button>
+            </div>
+        </header>
+
+        <aside id="mobileSidebar" class="mobile-sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-icon">🟢</span>
+                <div>
+                    <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+                    <span class="brand-sub">host</span>
+                </div>
+            </div>
+            <div class="sidebar-menu">
+                <button class="sidebar-item" onclick="showDashboardView(); toggleMobileSidebar();"> Home</button>
+                <button class="sidebar-item" onclick="showPlayersView(); toggleMobileSidebar();"> Players</button>
+                <button class="sidebar-item" onclick="showClubSettingsView(); toggleMobileSidebar();"> Club
+                    Settings</button>
+            </div>
+            <div class="sidebar-footer">
+                <div class="mode-display-pill mb-3">
+                    <span class="mode-label">MODE</span>
+                    <span class="mobileModeLabel mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top w-100" onclick="endSession()">End Session</button>
+            </div>
+        </aside>
+
+        <div class="sub-header-stats-bar">
+            <div class="stats-title-main">Open Play</div>
+            <div class="stats-metrics">
+                <span>COURTS <strong id="activeCourtsStat">0</strong>/<strong id="totalCourtsStat">2</strong></span>
+                <span>PLAYERS <strong id="totalPlayersStat">0</strong></span>
+                <span>QUEUE <strong id="queueCountStat">0</strong></span>
+            </div>
+        </div>
+
+        <div class="dashboard-content-area">
+            <div id="setupContainer">
+                <div class="card premium-card text-center mb-4">
+                    <span class="badge-pro mb-3">SETUP PHASE</span>
+                    <h3 class="m-0">Configure Your Open Play</h3>
+                    <p class="text-muted text-sm mt-1">Set courts, choose a mode, and add your players below.</p>
+                </div>
+
+                <div class="card courts-card premium-card">
+                    <div>
+                        <h3 class="m-0">Courts Available</h3>
+                    </div>
+                    <div class="counter">
+                        <button onclick="updateCourts(-1)">−</button>
+                        <span id="courtCount">2</span>
+                        <button onclick="updateCourts(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="card premium-card">
+                    <h3 class="mt-0">Matching Mode</h3>
+                    <div id="modeCard_balanced" class="mode-option active" onclick="setMode('balanced')">
+                        <h4 class="m-0 flex-between">Balanced <span class="badge bg-green text-white">RECOMMENDED</span>
+                        </h4>
+                        <p class="text-muted text-sm m-0 mt-1">Balances by win rate. Keeps play count equal.</p>
+                    </div>
+                    <div id="modeCard_social" class="mode-option" onclick="setMode('social')">
+                        <h4 class="m-0 flex-between">Social Mix <span class="badge bg-purple">NEW</span></h4>
+                        <p class="text-muted text-sm m-0 mt-1">Pure randomization for fun mix-ups.</p>
+                    </div>
+                    <div id="modeCard_winlose" class="mode-option" onclick="setMode('winlose')">
+                        <h4 class="m-0">Winners / Losers</h4>
+                        <p class="text-muted text-sm m-0 mt-1">Top winners take Court 1, lowest take bottom courts.</p>
+                    </div>
+                </div>
+
+                <div class="card premium-card">
+                    <div class="flex-between mb-3">
+                        <h3 class="m-0">Add players</h3>
+                    </div>
+
+                    <div class="add-player-form mb-3">
+                        <input type="text" id="playerName" placeholder="Enter name" class="mb-2">
+                        <input type="email" id="playerEmail" placeholder="player@gmail.com" class="mb-2"
+                            onkeypress="if(event.key === 'Enter') addPlayer()">
+                        <button class="btn-solid w-100 mt-2" onclick="addPlayer()">Add Player</button>
+                    </div>
+
+                    <div class="saved-players-dropdown-box mb-3" onclick="toggleSavedPlayersModal()">
+                        <div class="flex-between">
+                            <div>
+                                <strong id="savedPlayersCountLabel">0 saved players</strong>
+                                <div class="text-xs text-muted" style="font-size:0.75rem;">Add returning players</div>
+                            </div>
+                            <span style="font-size: 1.1rem; color: #64748b;">&rsaquo;</span>
+                        </div>
+                    </div>
+
+                    <div id="playerList" class="player-chips"></div>
+                    <p id="emptyState" class="text-center text-muted text-sm mt-3">Roster is empty.</p>
+                    <div class="mt-3 text-right text-sm fw-bold"><span id="playerCountLabel">0</span> Players Ready
+                    </div>
+                </div>
+
+                <button class="btn-gradient w-100 py-3 text-lg mt-3 mb-4" onclick="startSession()">START
+                    SESSION</button>
+            </div>
+
+            <div id="sessionContainer" style="display: none;">
+                <div class="flex-between mb-4">
+                    <div>
+                        <span class="text-sm text-green fw-bold">TOURNAMENT LIVE</span>
+                        <h2 class="m-0" style="font-size: 1.8rem;">Round <span id="roundLabel">1</span></h2>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-outline" onclick="returnToSetup()"
+                            style="padding: 0.5rem 1rem; font-size: 0.85rem;">Configure Setup</button>
+                    </div>
+                </div>
+
+                <div class="section-title">LIVE COURTS</div>
+                <div id="courtsGrid" class="courts-grid-top mb-4"></div>
+
+                <div class="section-title">MATCHMAKING</div>
+                <div class="matchmaking-layout">
+
+                    <div class="queue-panel-dark">
+                        <div class="queue-header-dark"
+                            style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <div class="flex-between w-100">
+                                <span class="queue-title-dark">QUEUE (<span id="queueCount">0</span>)</span>
+                                <span class="text-sm text-muted" style="color: #94a3b8;">Auto-ordered</span>
+                            </div>
+                            <button class="btn-outline w-100"
+                                style="padding: 6px; font-size: 0.75rem; background: rgba(5,150,105,0.1); border-color: #059669; color: #34d399;"
+                                onclick="openSummaryModal()">📊 End Session Summary</button>
+                        </div>
+                        <div id="queueList" class="athletic-queue-list queue-list-dark"></div>
+                    </div>
+
+                    <div id="upNextContainer" class="up-next-grid"></div>
+                </div>
+
+                <div class="card premium-card mt-4">
+                    <h3 class="mt-0">Live Standings</h3>
+                    <div class="table-responsive">
+                        <table class="standings-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Games</th>
+                                    <th>W</th>
+                                    <th>L</th>
+                                </tr>
+                            </thead>
+                            <tbody id="standingsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="playersView" class="view-container" style="display: none;">
+        <div class="sidebar-backdrop" onclick="toggleMobileSidebar()"></div>
+        <header class="mobile-top-bar">
+            <div class="brand-logo">
+                <span class="brand-icon">🟢</span>
+                <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+            </div>
+            <button class="hamburger-toggle" onclick="toggleMobileSidebar()">☰</button>
+        </header>
+
+        <header class="top-nav-bar desktop-only-nav">
+            <div class="nav-left">
+                <div class="brand-logo">
+                    <span class="brand-icon">🟢</span>
+                    <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+                </div>
+                <span class="brand-sub">host</span>
+            </div>
+            <div class="nav-right">
+                <button class="banner-btn" onclick="showDashboardView()"> Home</button>
+                <button class="banner-btn" onclick="showPlayersView()"> Players</button>
+                <button class="banner-btn" onclick="showClubSettingsView()"> Club Settings</button>
+                <div class="mode-display-pill">
+                    <span class="mode-label">MODE</span>
+                    <span class="mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top" onclick="endSession()">End</button>
+            </div>
+        </header>
+
+        <aside class="mobile-sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-icon">🟢</span>
+                <div>
+                    <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+                    <span class="brand-sub">host</span>
+                </div>
+            </div>
+            <div class="sidebar-menu">
+                <button class="sidebar-item" onclick="showDashboardView(); toggleMobileSidebar();"> Home</button>
+                <button class="sidebar-item" onclick="showPlayersView(); toggleMobileSidebar();"> Players</button>
+                <button class="sidebar-item" onclick="showClubSettingsView(); toggleMobileSidebar();"> Club
+                    Settings</button>
+            </div>
+            <div class="sidebar-footer">
+                <div class="mode-display-pill mb-3">
+                    <span class="mode-label">MODE</span>
+                    <span class="mobileModeLabel mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top w-100" onclick="endSession()">End Session</button>
+            </div>
+        </aside>
+
+        <div class="dashboard-content-area" style="padding-top: 24px;">
+            <div class="flex-between mb-4 flex-wrap gap-2">
+                <input type="text" id="rosterSearchInput" placeholder="Search players by name..."
+                    oninput="renderPlayersManagementTable()" style="max-width: 380px;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-outline-athletic">Import from Reclub</button>
+                    <button class="btn-outline-athletic">Merge profiles</button>
+                </div>
+            </div>
+
+            <div class="card premium-card mb-4" style="background: #f0fdf4; border-color: #bbf7d0; color: #166534;">
+                <strong>Roster tips</strong><br>
+                <span style="font-size: 0.85rem;">Tap stars or M/F to edit. Use Edit for name or delete.</span>
+            </div>
+
+            <div class="card premium-card">
+                <div class="flex-between mb-3">
+                    <h3 class="m-0">All Players <span class="text-sm text-muted" id="playersCountDisplay"
+                            style="font-weight: normal;">0 players</span></h3>
+                    <button class="btn-outline" style="font-size: 0.75rem;">Sort: A-Z</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="standings-table">
+                        <thead>
+                            <tr>
+                                <th>NAME</th>
+                                <th>SKILL</th>
+                                <th>DIVISION ROUTING</th>
+                                <th>GENDER</th>
+                                <th>RECORD</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playersManagementTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="clubSettingsView" class="view-container" style="display: none;">
+        <div class="sidebar-backdrop" onclick="toggleMobileSidebar()"></div>
+        <header class="mobile-top-bar">
+            <div class="brand-logo">
+                <span class="brand-icon">🟢</span>
+                <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+            </div>
+            <button class="hamburger-toggle" onclick="toggleMobileSidebar()">☰</button>
+        </header>
+
+        <header class="top-nav-bar desktop-only-nav">
+            <div class="nav-left">
+                <div class="brand-logo">
+                    <span class="brand-icon">🟢</span>
+                    <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+                </div>
+                <span class="brand-sub">host</span>
+            </div>
+            <div class="nav-right">
+                <button class="banner-btn" onclick="showDashboardView()"> Home</button>
+                <button class="banner-btn" onclick="showPlayersView()"> Players</button>
+                <button class="banner-btn" onclick="showClubSettingsView()"> Club Settings</button>
+                <div class="mode-display-pill">
+                    <span class="mode-label">MODE</span>
+                    <span class="mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top" onclick="endSession()">End</button>
+            </div>
+        </header>
+
+        <aside class="mobile-sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-icon">🟢</span>
+                <div>
+                    <span class="brand-text navClubTitle">Piqueue Ball Club</span>
+                    <span class="brand-sub">host</span>
+                </div>
+            </div>
+            <div class="sidebar-menu">
+                <button class="sidebar-item" onclick="showDashboardView(); toggleMobileSidebar();"> Home</button>
+                <button class="sidebar-item" onclick="showPlayersView(); toggleMobileSidebar();"> Players</button>
+                <button class="sidebar-item" onclick="showClubSettingsView(); toggleMobileSidebar();"> Club
+                    Settings</button>
+            </div>
+            <div class="sidebar-footer">
+                <div class="mode-display-pill mb-3">
+                    <span class="mode-label">MODE</span>
+                    <span class="mobileModeLabel mode-val">Balanced</span>
+                </div>
+                <button class="btn-end-top w-100" onclick="endSession()">End Session</button>
+            </div>
+        </aside>
+
+        <div class="dashboard-content-area" style="padding-top: 24px;">
+            <div class="flex-between mb-4">
+                <div>
+                    <h2 class="m-0">Club Settings</h2>
+                    <p class="text-muted text-sm m-0 mt-1">Manage your club link, QR code, and member invitation links
+                    </p>
+                </div>
+            </div>
+
+            <div class="card premium-card mb-4">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                    <div
+                        style="background: #dcfce7; color: #166534; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem;">
+                        ✓</div>
+                    <div>
+                        <strong id="clubCardHeaderTitle" style="font-size: 1.1rem; display: block;">club name</strong>
+                        <span style="color: #16a34a; font-size: 0.8rem; font-weight: 700;">Club connected</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Club Name</label>
+                    <p class="text-muted text-xs mb-2" style="font-size: 0.75rem; text-transform: none;">Change the
+                        display name. The club link stays the same.</p>
+                    <div style="display: flex; gap: 10px; max-width: 500px;">
+                        <input type="text" id="settingClubNameInput">
+                        <button class="btn-solid" onclick="saveClubNameSetting()">Save Club Name</button>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3 mt-4">
+                    <label>Club Description</label>
+                    <p class="text-muted text-xs mb-2" style="font-size: 0.75rem; text-transform: none;">Provide a brief
+                        description or venue note for your club members.</p>
+                    <div style="display: flex; gap: 10px; max-width: 500px;">
+                        <input type="text" id="settingClubDescInput" placeholder="Enter club description...">
+                        <button class="btn-solid" onclick="saveClubNameSetting()">Save Description</button>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 24px;">
+                    <div class="flex-between mb-2">
+                        <strong style="font-size: 0.95rem; color: var(--dark-green);">Club Member Invitation
+                            Link</strong>
+                        <button class="btn-solid" style="padding: 6px 14px; font-size: 0.8rem;"
+                            onclick="copyClubLink()">Copy Invitation Link</button>
+                    </div>
+                    <div id="clubLinkDisplay"
+                        style="color: #059669; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-bottom: 6px; background: white; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    </div>
+                    <p class="text-muted text-sm m-0" style="font-size: 0.75rem; text-transform: none;">Send this link
+                        to players. When they open it, they can register and instantly join your club roster.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="savedPlayersModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="max-width: 440px; max-height: 80vh; overflow-y: auto;">
+            <div class="flex-between mb-3">
+                <h3 class="m-0 text-green">Saved Players Roster</h3>
+                <button class="chip-remove" onclick="toggleSavedPlayersModal()"
+                    style="font-size: 1.2rem;">&times;</button>
+            </div>
+            <p class="text-sm text-muted mb-3">Click any saved player below to quickly add them to your current session
+                roster:</p>
+            <div id="savedPlayersModalList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <button class="btn-solid w-100 mt-4" onclick="toggleSavedPlayersModal()">Done</button>
+        </div>
+    </div>
+
+    <div id="choosePlayersModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="max-width: 520px;">
+            <div class="flex-between mb-3">
+                <h3 id="modalCourtTitle" class="m-0 text-green">Court Setup</h3>
+                <button class="chip-remove" onclick="closeChooseModal()" style="font-size: 1.3rem;">&times;</button>
+            </div>
+
+            <div class="choose-teams-grid mb-3">
+                <div class="choose-team-box">
+                    <div class="choose-team-header blue">TEAM 1</div>
+                    <div id="slot_a_0" class="player-slot empty" onclick="removeSlotPlayer('A', 0)">Empty Slot</div>
+                    <div id="slot_a_1" class="player-slot empty" onclick="removeSlotPlayer('A', 1)">Empty Slot</div>
+                </div>
+                <div class="choose-team-box">
+                    <div class="choose-team-header orange">TEAM 2</div>
+                    <div id="slot_b_0" class="player-slot empty" onclick="removeSlotPlayer('B', 0)">Empty Slot</div>
+                    <div id="slot_b_1" class="player-slot empty" onclick="removeSlotPlayer('B', 1)">Empty Slot</div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <input type="text" id="modalSearchInput" placeholder="Search players..."
+                    oninput="renderModalSearchList()">
+            </div>
+
+            <div id="modalSearchList" class="modal-search-list mb-3"></div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-outline w-100" onclick="closeChooseModal()">Cancel</button>
+                <button class="btn-solid w-100" onclick="confirmChooseModal()">Fill Court & Start</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="summaryModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex-between mb-3">
+                <h3 class="m-0 text-green">Session Play Summary</h3>
+                <button class="chip-remove" onclick="closeSummaryModal()" style="font-size: 1.2rem;">&times;</button>
+            </div>
+            <div id="summaryContent"></div>
+            <button class="btn-solid w-100 mt-4" onclick="closeSummaryModal()">Close Summary</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

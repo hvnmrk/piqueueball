@@ -77,14 +77,15 @@
                 <button class="sidebar-item" onclick="showPlayersView(); toggleMobileSidebar();">Players</button>
                 <button class="sidebar-item" onclick="showClubSettingsView(); toggleMobileSidebar();">Club
                     Settings</button>
+
+
+
             </div>
             <div class="sidebar-footer">
                 <div class="mode-display-pill mb-3">
                     <span class="mode-label">MODE</span>
                     <span class="mobileModeLabel mode-val">Balanced</span>
                 </div>
-                <button class="btn-end-top w-100 mb-2" onclick="endActiveSession(); toggleMobileSidebar();"
-                    style="background: #059669;">Log out</button>
                 <button class="btn-end-top w-100" onclick="endSession()">Logout</button>
             </div>
         </aside>
@@ -113,9 +114,7 @@
                     <span class="mode-label">MODE</span>
                     <span id="currentModeLabel" class="mode-val">Balanced</span>
                 </div>
-                <button class="banner-btn green-btn" onclick="endActiveSession()"
-                    style="background:#059669; border-color:#047857; color:white;">Log Out</button>
-                <button class="btn-end-top" onclick="endSession()">Logout</button>
+                <button class="btn-end-top w-100" onclick="endSession()">Logout</button>
             </div>
         </header>
 

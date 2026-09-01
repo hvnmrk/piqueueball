@@ -282,7 +282,7 @@ function closeSummaryModal() {
     state.activeMatches = {};
     state.upNext = {};
     state.round = 1;
-    state.players = []; // Clear session roster for a fresh session setup
+    state.players = [];
     document.getElementById('sessionContainer').style.display = 'none';
     document.getElementById('setupContainer').style.display = 'block';
     renderPlayers();
@@ -639,7 +639,6 @@ function startSession() {
         return;
     }
 
-    // Reset session stats cleanly so each new session starts fresh with 0-0 records
     state.players.forEach(p => {
         p.gamesPlayed = 0;
         p.wins = 0;
@@ -998,6 +997,57 @@ function removeSlotPlayer(team, index) {
     renderModalSearchList();
 }
 
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    playSound('success');
+    const name = document.getElementById('name').value.trim();
+    const clubName = document.getElementById('clubName').value.trim() || 'Piqueue Ball Club';
+    const email = document.getElementById('email').value.trim();
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+        showMessage('Only @gmail.com addresses are permitted.', 'error');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verifying...';
+
+    try {
+        let { data: existingUser, error: selectError } = await db.from('users').select('*').eq('email', email).maybeSingle();
+        if (selectError) throw selectError;
+
+        if (existingUser) {
+            localStorage.setItem('piqueueHost', existingUser.name);
+            localStorage.setItem('piqueueEmail', existingUser.email);
+            localStorage.setItem('piqueueClub', existingUser.club_name || clubName);
+            state.host.name = existingUser.name;
+            state.host.email = existingUser.email;
+            state.host.clubName = existingUser.club_name || clubName;
+
+            transitionToDashboard(existingUser.name);
+            loadSavedPlayers();
+        } else {
+            const { data: newUser, error: insertError } = await db.from('users').insert([{ name, email, club_name: clubName }]).select().single();
+            if (insertError) throw insertError;
+
+            localStorage.setItem('piqueueHost', newUser.name);
+            localStorage.setItem('piqueueEmail', newUser.email);
+            localStorage.setItem('piqueueClub', clubName);
+            state.host.name = newUser.name;
+            state.host.email = newUser.email;
+            state.host.clubName = clubName;
+
+            transitionToDashboard(newUser.name);
+            loadSavedPlayers();
+        }
+    } catch (error) {
+        console.error("Auth error:", error);
+        showMessage(error.message || 'Database error occurred.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Continue to Dashboard';
+    }
+});
+
 function confirmChooseModal() {
     playSound('success');
     if (!state.chosenTeamA[0] || !state.chosenTeamA[1] || !state.chosenTeamB[0] || !state.chosenTeamB[1]) {
@@ -1033,7 +1083,7 @@ function openSummaryModal() {
             </div>
             <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
                 <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">SAVED PLAYERS POOL</div>
-                <div style="font-size: 1rem; font-weight: 800; color: #059669; margin-top: 2px;">${state.savedPool ? state.savedPool.length : 0} Saved in DB</div>
+                <div style="font-size: 1.0rem; font-weight: 800; color: #059669; margin-top: 2px;">${state.savedPool ? state.savedPool.length : 0} Saved in DB</div>
             </div>
             <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
                 <div style="font-size: 0.8rem; color: #64748b; font-weight: 700;">TOTAL PARTICIPANTS</div>

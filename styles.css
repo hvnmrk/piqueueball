@@ -1238,3 +1238,229 @@ button:disabled {
     color: white;
     border-color: #db2777;
 }
+
+/* ==========================================================================
+   NEW FEATURE EXTENSIONS: In-Session Controls, Live Spectator, Queuing & QR
+   ========================================================================== */
+
+/* Live Pulse Animation */
+.live-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulseGlow 1.5s infinite;
+}
+
+@keyframes pulseGlow {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* In-Session Mode Switcher */
+.session-mode-pill-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.session-mode-select {
+    border: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Court Next Up Banner (Displayed directly below active court assignments) */
+.court-next-up-banner {
+    background: #f8fafc;
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.court-next-up-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+}
+
+.court-next-up-teams {
+    font-weight: 700;
+    color: var(--dark-green);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* Spectator View */
+.spectator-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* Invitation Page Layout */
+.invite-page-container {
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.invite-content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.invite-roster-span {
+    grid-column: 1 / -1;
+}
+
+.invite-players-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.invite-player-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.invite-player-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.invite-player-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.badge-on-court {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fca5a5;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.badge-in-queue {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #93c5fd;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.badge-roster-ready {
+    background: var(--light-green);
+    color: var(--primary);
+    border: 1px solid #86efac;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* Payment QR Display */
+.qr-display-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-image-wrapper {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.qr-image-wrapper:hover {
+    transform: scale(1.02);
+}
+
+.qr-preview-img {
+    max-width: 220px;
+    max-height: 220px;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.settings-qr-preview-box {
+    width: 140px;
+    height: 140px;
+    background: #f8fafc;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.settings-qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}

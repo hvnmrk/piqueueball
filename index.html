@@ -74,33 +74,161 @@
     </div>
 
     <!-- ==================== PLAYER JOIN VIEW (Invite Link Handler) ==================== -->
-    <div id="playerJoinView" class="view-container" style="display: none;">
-        <div class="glass-card text-center" style="margin: auto;">
-            <h2 class="app-title" id="joinClubTitle">Join Club</h2>
-            <p class="auth-subtitle">Register to join this club's open play roster</p>
-            <form id="playerJoinForm">
-                <div class="form-group text-left">
-                    <label for="joinName">Your Full Name</label>
-                    <input type="text" id="joinName" required placeholder="Enter name">
+    <div id="playerJoinView" class="view-container" style="display: none; padding: 20px 16px;">
+        <div class="invite-page-container">
+            <div class="invite-header-bar text-center mb-4">
+                <h2 class="app-title m-0" id="joinClubTitle">Join Club</h2>
+                <p class="auth-subtitle m-0 mt-1">Register to join this club's open play roster & view live games</p>
+                <div class="mt-3" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="btn-solid" id="btnGoToLiveSpectator" style="font-size: 0.82rem; padding: 6px 14px; background: #7c3aed;">
+                        👀 Watch Live Courts & Queue
+                    </button>
                 </div>
-                <div class="form-group text-left">
-                    <label for="joinEmail">Your Email Address</label>
-                    <input type="email" id="joinEmail" required placeholder="john@gmail.com">
+            </div>
+
+            <div class="invite-content-grid">
+                <!-- 1. JOIN FORM CARD -->
+                <div class="glass-card">
+                    <h3 class="m-0 text-green mb-2" style="font-size: 1.15rem;">Player Registration</h3>
+                    <p class="text-sm text-muted mb-3">Add yourself to the club roster for today's session</p>
+                    <form id="playerJoinForm">
+                        <div class="form-group text-left">
+                            <label for="joinName">Your Full Name</label>
+                            <input type="text" id="joinName" required placeholder="Enter name">
+                        </div>
+                        <div class="form-group text-left">
+                            <label for="joinEmail">Your Email Address</label>
+                            <input type="email" id="joinEmail" required placeholder="john@gmail.com">
+                        </div>
+                        <div class="form-group text-left">
+                            <label for="joinSkill">Skill Level (DUPR)</label>
+                            <select id="joinSkill">
+                                <option value="2.5">2.5 (Novice)</option>
+                                <option value="3.0">3.0 (Intermediate)</option>
+                                <option value="3.5" selected>3.5 (Advanced Int.)</option>
+                                <option value="4.0">4.0 (Skilled)</option>
+                                <option value="4.5">4.5 (Expert)</option>
+                                <option value="5.0">5.0 (Pro)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-gradient w-100">Join Club Roster</button>
+                        <div id="joinMessage" class="mt-3"></div>
+                    </form>
                 </div>
-                <div class="form-group text-left">
-                    <label for="joinSkill">Skill Level (DUPR)</label>
-                    <select id="joinSkill">
-                        <option value="2.5">2.5 (Novice)</option>
-                        <option value="3.0">3.0 (Intermediate)</option>
-                        <option value="3.5" selected>3.5 (Advanced Int.)</option>
-                        <option value="4.0">4.0 (Skilled)</option>
-                        <option value="4.5">4.5 (Expert)</option>
-                        <option value="5.0">5.0 (Pro)</option>
-                    </select>
+
+                <!-- 2. PAYMENT QR CODE CARD -->
+                <div class="glass-card">
+                    <div class="flex-between mb-2">
+                        <h3 class="m-0 text-green" style="font-size: 1.15rem;">Court Fee / Payment</h3>
+                        <span class="badge bg-green" style="font-size: 0.65rem;">GCash / QR</span>
+                    </div>
+                    <p class="text-sm text-muted mb-3">Scan host QR to pay court rental fee or split costs directly:</p>
+
+                    <div id="inviteQrDisplayBox" class="qr-display-card text-center">
+                        <div id="inviteQrImageContainer">
+                            <p class="text-sm text-muted" style="padding: 24px 10px;">No payment QR uploaded yet by host.</p>
+                        </div>
+                    </div>
+
+                    <!-- Host inline upload option if host is viewing -->
+                    <div id="hostQrInlineUploadSection" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                        <span class="text-xs text-muted fw-bold" style="display: block; margin-bottom: 6px;">Host Controls:</span>
+                        <input type="file" id="hostInlineQrInput" accept="image/*" style="display: none;" onchange="handleQrUpload(event)">
+                        <button type="button" class="btn-outline w-100" style="font-size: 0.78rem; padding: 6px;" onclick="document.getElementById('hostInlineQrInput').click()">
+                            📷 Upload / Change QR Code Image
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn-gradient w-100">Join Club Roster</button>
-                <div id="joinMessage" class="mt-3"></div>
-            </form>
+
+                <!-- 3. CURRENT PLAYERS IN SESSION / ROSTER CARD -->
+                <div class="glass-card invite-roster-span">
+                    <div class="flex-between mb-2">
+                        <h3 class="m-0 text-green" style="font-size: 1.15rem;">
+                            Session Players & Roster (<span id="invitePlayerCount">0</span>)
+                        </h3>
+                        <span class="badge-pro" id="inviteSessionStatusBadge">SESSION ROSTER</span>
+                    </div>
+                    <p class="text-sm text-muted mb-3">Players currently participating or queued for this club</p>
+                    <div id="invitePlayerListContainer" class="invite-players-list">
+                        <p class="text-sm text-muted text-center" style="padding: 20px;">Loading players...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LIVE SPECTATOR VIEW (Shareable Live Game) ==================== -->
+    <div id="liveSpectatorView" class="view-container" style="display: none;">
+        <header class="top-nav-bar" style="position: sticky; top: 0; z-index: 1000;">
+            <div class="nav-left">
+                <div class="brand-logo">
+                    <span id="spectatorClubTitle" class="brand-text">Piqueue Ball</span>
+                </div>
+                <span class="spectator-live-pill">
+                    <span class="live-pulse-dot"></span> LIVE SPECTATOR
+                </span>
+            </div>
+            <div class="nav-right">
+                <div class="mode-display-pill">
+                    <span class="mode-label">MODE</span>
+                    <span id="spectatorModeLabel" class="mode-val">Balanced</span>
+                </div>
+                <button class="banner-btn green-btn" id="btnSpectatorJoinRoster" onclick="goToJoinView()">Join Roster</button>
+            </div>
+        </header>
+
+        <div class="sub-header-stats-bar">
+            <div class="stats-title-main" id="spectatorSubTitle">Open Play Live</div>
+            <div class="stats-metrics">
+                <span>COURTS <strong id="spectatorActiveCourts">0</strong>/<strong id="spectatorTotalCourts">2</strong></span>
+                <span>PLAYERS <strong id="spectatorTotalPlayers">0</strong></span>
+                <span>QUEUE <strong id="spectatorQueueCount">0</strong></span>
+            </div>
+        </div>
+
+        <div class="dashboard-content-area">
+            <div class="flex-between mb-4 flex-wrap gap-2">
+                <div>
+                    <span class="text-sm text-green fw-bold">REAL-TIME MATCHES</span>
+                    <h2 class="m-0" style="font-size: 1.8rem;">Round <span id="spectatorRoundLabel">1</span></h2>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-outline" onclick="copyCurrentUrl()" style="padding: 0.5rem 0.9rem; font-size: 0.82rem;">📋 Copy Live Link</button>
+                    <button class="btn-solid" id="btnSpectatorViewQr" onclick="openSpectatorQrModal()" style="background:#0284c7; padding: 0.5rem 0.9rem; font-size: 0.82rem;">💳 Pay Court Fee</button>
+                </div>
+            </div>
+
+            <div class="section-title">LIVE COURTS</div>
+            <div id="spectatorCourtsGrid" class="courts-grid-top mb-4"></div>
+
+            <div class="section-title">MATCHMAKING & UP NEXT</div>
+            <div class="matchmaking-layout">
+                <div class="queue-panel-dark">
+                    <div class="queue-header-dark">
+                        <span class="queue-title-dark">QUEUE (<span id="spectatorQueueCountInner">0</span>)</span>
+                        <span class="text-sm text-muted" style="color: #94a3b8;">Auto-ordered</span>
+                    </div>
+                    <div id="spectatorQueueList" class="athletic-queue-list queue-list-dark"></div>
+                </div>
+                <div id="spectatorUpNextContainer" class="up-next-grid"></div>
+            </div>
+
+            <div class="card premium-card mt-4">
+                <h3 class="mt-0">Live Standings</h3>
+                <div class="table-responsive">
+                    <table class="standings-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Games</th>
+                                <th>W</th>
+                                <th>L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spectatorStandingsBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -119,6 +247,7 @@
                 <button class="sidebar-item" onclick="showPlayersView(); toggleMobileSidebar();">Players</button>
                 <button class="sidebar-item" onclick="showClubSettingsView(); toggleMobileSidebar();">Club
                     Settings</button>
+                <button class="sidebar-item" onclick="openSessionHistoryModal(); toggleMobileSidebar();">📜 Past Sessions</button>
             </div>
             <div class="sidebar-footer">
                 <div class="mode-display-pill mb-3">
@@ -147,6 +276,7 @@
                 <button class="banner-btn" onclick="showDashboardView()">Home</button>
                 <button class="banner-btn" onclick="showPlayersView()">Players</button>
                 <button class="banner-btn" onclick="showClubSettingsView()">Club Settings</button>
+                <button class="banner-btn" onclick="openSessionHistoryModal()">📜 History</button>
                 <div class="mode-display-pill">
                     <span class="mode-label">MODE</span>
                     <span id="currentModeLabel" class="mode-val">Balanced</span>
@@ -167,7 +297,10 @@
         <div class="dashboard-content-area">
             <div id="setupContainer">
                 <div class="card premium-card text-center mb-4">
-                    <span class="badge-pro mb-3">SETUP PHASE</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="badge-pro">SETUP PHASE</span>
+                        <button class="btn-outline" style="padding: 4px 10px; font-size: 0.75rem;" onclick="openSessionHistoryModal()">📜 Past Sessions</button>
+                    </div>
                     <h3 class="m-0">Configure Your Open Play</h3>
                     <p class="text-muted text-sm mt-1">Set courts, choose a mode, and add your players below.</p>
                 </div>
@@ -206,8 +339,8 @@
                     </div>
 
                     <div class="add-player-form mb-3">
-                        <input type="text" id="playerName" placeholder="Enter name" class="mb-2">
-                        <input type="email" id="playerEmail" placeholder="player@gmail.com" class="mb-2"
+                        <input type="text" id="playerName" placeholder="Enter player name" class="mb-2" required>
+                        <input type="email" id="playerEmail" placeholder="Enter email (required)" class="mb-2" required
                             onkeypress="if(event.key === 'Enter') addPlayer()">
                         <button class="btn-solid w-100 mt-2" onclick="addPlayer()">Add Player</button>
                     </div>
@@ -233,16 +366,34 @@
             </div>
 
             <div id="sessionContainer" style="display: none;">
-                <div class="flex-between mb-4">
+                <div class="flex-between mb-4 flex-wrap gap-2">
                     <div>
-                        <span class="text-sm text-green fw-bold">TOURNAMENT LIVE</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="text-sm text-green fw-bold">TOURNAMENT LIVE</span>
+                            <span class="live-pulse-dot"></span>
+                        </div>
                         <h2 class="m-0" style="font-size: 1.8rem;">Round <span id="roundLabel">1</span></h2>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <!-- In-session Mode Switcher -->
+                        <div class="session-mode-pill-box">
+                            <span class="text-xs text-muted fw-bold" style="font-size:0.75rem;">MODE:</span>
+                            <select id="inSessionModeSelect" class="session-mode-select" onchange="switchSessionMode(this.value)">
+                                <option value="balanced">Balanced</option>
+                                <option value="social">Social Mix</option>
+                                <option value="winlose">Winners / Losers</option>
+                            </select>
+                        </div>
+                        <!-- In-session Add Players -->
+                        <button class="btn-solid" onclick="openAddPlayerToSessionModal()"
+                            style="padding: 0.5rem 0.85rem; font-size: 0.82rem; background: #0284c7;">+ Add Players</button>
+                        <!-- Share Live Game -->
+                        <button class="btn-solid" onclick="shareLiveGameLink()"
+                            style="padding: 0.5rem 0.85rem; font-size: 0.82rem; background: #7c3aed;">🔗 Share Live Game</button>
                         <button class="btn-outline" onclick="returnToSetup()"
-                            style="padding: 0.5rem 1rem; font-size: 0.85rem;">Configure Setup</button>
+                            style="padding: 0.5rem 0.85rem; font-size: 0.82rem;">Configure Setup</button>
                         <button class="btn-solid" onclick="endActiveSession()"
-                            style="background:#059669; padding: 0.5rem 1rem; font-size: 0.85rem;">End Session &
+                            style="background:#059669; padding: 0.5rem 0.85rem; font-size: 0.82rem;">End Session &
                             Save</button>
                     </div>
                 </div>
@@ -460,6 +611,50 @@
                         style="color: #059669; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-bottom: 6px; background: white; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
                     </div>
                 </div>
+
+                <div
+                    style="background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 16px;">
+                    <div class="flex-between mb-2">
+                        <strong style="font-size: 0.95rem; color: #7c3aed;">Shareable Live Game Link (Spectator View)</strong>
+                        <button class="btn-solid" style="padding: 6px 14px; font-size: 0.80rem; background: #7c3aed;"
+                            onclick="copySpectatorLink()">Copy Live Game Link</button>
+                    </div>
+                    <div id="spectatorLinkDisplay"
+                        style="color: #7c3aed; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-bottom: 6px; background: white; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT QR CODE UPLOAD CARD -->
+            <div class="card premium-card mb-4">
+                <div class="flex-between mb-3">
+                    <div>
+                        <h3 class="m-0">Host Payment QR Code (GCash / QR)</h3>
+                        <p class="text-muted text-sm m-0 mt-1">Upload your payment QR image so players can scan and pay court fees</p>
+                    </div>
+                    <span class="badge bg-green">COURT FEES</span>
+                </div>
+
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div id="settingsQrPreviewBox" class="settings-qr-preview-box">
+                        <p class="text-xs text-muted text-center" style="margin: 0; padding: 20px 8px;">No QR code uploaded</p>
+                    </div>
+                    <div style="flex: 1; min-width: 240px;">
+                        <input type="file" id="hostSettingsQrInput" accept="image/*" style="display: none;" onchange="handleQrUpload(event)">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn-solid" onclick="document.getElementById('hostSettingsQrInput').click()">
+                                📷 Upload QR Image
+                            </button>
+                            <button type="button" id="btnRemoveQr" class="btn-outline" style="color: var(--error); border-color: #fca5a5; display: none;" onclick="removePaymentQr()">
+                                Remove QR
+                            </button>
+                        </div>
+                        <p class="text-xs text-muted mt-2 mb-0">
+                            Supported: PNG, JPG, JPEG. Automatically resized and optimized. This QR code will appear on your public invite page and live spectator view so players can pay you directly.
+                        </p>
+                        <div id="qrUploadStatus" class="mt-2 text-sm fw-bold text-green"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -474,8 +669,41 @@
             </div>
             <p class="text-sm text-muted mb-3">Click any saved player below to quickly add them to your current session
                 roster:</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;">
+                <span class="text-xs text-muted fw-bold">SAVED ROSTER</span>
+                <button class="btn-solid" style="padding: 5px 12px; font-size: 0.8rem; background: #059669;" onclick="addAllSavedPlayersToSession()">+ Add All to Session</button>
+            </div>
             <div id="savedPlayersModalList" style="display: flex; flex-direction: column; gap: 8px;"></div>
             <button class="btn-solid w-100 mt-4" onclick="toggleSavedPlayersModal()">Done</button>
+        </div>
+    </div>
+
+    <!-- IN-SESSION ADD PLAYERS MODAL -->
+    <div id="addSessionPlayerModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="max-width: 480px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex-between mb-3">
+                <div>
+                    <h3 class="m-0 text-green">Add Players to Active Session</h3>
+                    <p class="text-xs text-muted m-0 mt-1">Add new or returning players without resetting tournament progress</p>
+                </div>
+                <button class="chip-remove" onclick="closeAddPlayerToSessionModal()" style="font-size: 1.3rem;">&times;</button>
+            </div>
+
+            <div class="card mb-3" style="background: #f8fafc; border: 1px solid var(--border); padding: 14px;">
+                <span class="text-xs fw-bold text-muted mb-2" style="display: block;">QUICK ADD NEW PLAYER</span>
+                <input type="text" id="sessionNewPlayerName" placeholder="Enter player name" class="mb-2 w-100" style="padding: 8px 12px; font-size: 0.85rem;" required>
+                <input type="email" id="sessionNewPlayerEmail" placeholder="player@gmail.com (required)" class="mb-2 w-100" style="padding: 8px 12px; font-size: 0.85rem;" required
+                    onkeypress="if(event.key === 'Enter') submitNewPlayerToSession()">
+                <button class="btn-solid w-100" style="padding: 8px; font-size: 0.85rem;" onclick="submitNewPlayerToSession()">+ Add New Player</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="text-xs fw-bold text-muted">SELECT FROM SAVED ROSTER</span>
+                <button class="btn-solid" style="padding: 4px 10px; font-size: 0.75rem; background: #059669;" onclick="addAllSavedPlayersToActiveSession()">+ Add All Unadded</button>
+            </div>
+            <div id="sessionSavedPlayersList" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;"></div>
+
+            <button class="btn-outline w-100 mt-4" onclick="closeAddPlayerToSessionModal()">Done</button>
         </div>
     </div>
 
@@ -523,6 +751,36 @@
             </div>
             <div id="summaryContent"></div>
             <button class="btn-solid w-100 mt-4" onclick="closeSummaryModal()">Proceed to Configuration</button>
+        </div>
+    </div>
+
+    <!-- SESSION HISTORY MODAL -->
+    <div id="sessionHistoryModal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="max-width: 560px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex-between mb-3">
+                <div>
+                    <h3 class="m-0 text-green">Past Session History</h3>
+                    <p class="text-xs text-muted m-0 mt-1">Archived results, rounds completed, and final standings</p>
+                </div>
+                <button class="chip-remove" onclick="closeSessionHistoryModal()" style="font-size: 1.2rem;">&times;</button>
+            </div>
+            <div id="sessionHistoryList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <div class="flex-between mt-4 gap-2">
+                <button class="btn-outline" style="padding: 6px 14px; font-size: 0.78rem; color: #ef4444; border-color: #fca5a5;" onclick="clearSessionHistory()">Clear Local History</button>
+                <button class="btn-solid" style="padding: 6px 20px; font-size: 0.85rem;" onclick="closeSessionHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENLARGE QR MODAL -->
+    <div id="enlargeQrModal" class="modal-overlay" style="display: none;" onclick="closeEnlargeQrModal()">
+        <div class="glass-card text-center" style="max-width: 380px; padding: 24px;" onclick="event.stopPropagation()">
+            <div class="flex-between mb-3">
+                <h3 class="m-0 text-green">Court Fee Payment QR</h3>
+                <button class="chip-remove" onclick="closeEnlargeQrModal()" style="font-size: 1.3rem;">&times;</button>
+            </div>
+            <div id="enlargeQrImgContainer" style="padding: 10px; background: white; border-radius: 12px; border: 1px solid var(--border);"></div>
+            <p class="text-xs text-muted mt-3 mb-0">Scan using GCash or your banking app to pay host directly.</p>
         </div>
     </div>
 
